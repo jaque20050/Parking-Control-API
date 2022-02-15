@@ -24,13 +24,24 @@ import com.api.parkingcontrol.service.ParkingSpotService;
 public class ParkingSpotController {
 
 	final ParkingSpotService parkingSpotService;
-	
+
 	public ParkingSpotController(ParkingSpotService parkingSpotService) {
 		this.parkingSpotService = parkingSpotService;
 	}
 
 	@PostMapping
-	public ResponseEntity<Object> saveParkingSpot(@RequestBody @Valid ParkingSpotDto parkingSpotDto){
+	public ResponseEntity<Object> saveParkingSpot(@RequestBody @Valid ParkingSpotDto parkingSpotDto) {
+		if (parkingSpotService.existsByLicensePlateCar(parkingSpotDto.getLicensePlateCar())) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflit: Esta placa de carro já está em uso");
+		}
+		if (parkingSpotService.existsByParkingSpotNumber(parkingSpotDto.getParkingSpotNumber())) {
+			return ResponseEntity.status(HttpStatus.CONFLICT).body("Conflit: License Plate Car is already in use!");
+		}
+		if (parkingSpotService.existsByApartmentAndBlock(parkingSpotDto.getApartment(), parkingSpotDto.getBlock())) {
+			return ResponseEntity.status(HttpStatus.CONFLICT)
+					.body("Conflit: Parking Spot already registred for this apartment/block!");
+		}
+
 		var parkingSpotModel = new ParkingSpotModel();
 		BeanUtils.copyProperties(parkingSpotDto, parkingSpotModel);
 		parkingSpotModel.setRegistrationDate(LocalDateTime.now(ZoneId.of("UTC")));
